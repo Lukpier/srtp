@@ -170,7 +170,7 @@ func (s *SessionSRTP) decrypt(buf []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("I'm decripted receive request ", s.count.get())
+	fmt.Println("I'm decripted receive request ", s.count.Get())
 
 	return nil
 }
