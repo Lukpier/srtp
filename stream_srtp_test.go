@@ -39,6 +39,7 @@ func TestBufferFactory(t *testing.T) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
+		count:         &count32{},
 		BufferFactory: bf,
 		Profile:       ProtectionProfileAes128CmHmacSha1_80,
 	})
@@ -50,6 +51,7 @@ func TestBufferFactory(t *testing.T) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
+		count:         &count32{},
 		BufferFactory: bf,
 		Profile:       ProtectionProfileAes128CmHmacSha1_80,
 	})
@@ -71,6 +73,7 @@ func BenchmarkWrite(b *testing.B) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
+		count:   &count32{},
 		Profile: ProtectionProfileAes128CmHmacSha1_80,
 	}
 
@@ -101,7 +104,6 @@ func BenchmarkWrite(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		packet.Header.SequenceNumber++
-
 		_, err = ws.Write(packetRaw)
 		if err != nil {
 			b.Fatal(err)
@@ -126,6 +128,7 @@ func BenchmarkWriteRTP(b *testing.B) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
+		count:   &count32{},
 		Profile: ProtectionProfileAes128CmHmacSha1_80,
 	}
 
@@ -150,7 +153,6 @@ func BenchmarkWriteRTP(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		header.SequenceNumber++
-
 		_, err = ws.WriteRTP(header, payload)
 		if err != nil {
 			b.Fatal(err)

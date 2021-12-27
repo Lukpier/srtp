@@ -28,7 +28,7 @@ func TestExtractSessionKeysFromDTLS(t *testing.T) {
 	tt := []struct {
 		config *Config
 	}{
-		{&Config{Profile: ProtectionProfileAes128CmHmacSha1_80}},
+		{&Config{Profile: ProtectionProfileAes128CmHmacSha1_80, count: &count32{}}},
 	}
 
 	m := &mockKeyingMaterialExporter{}

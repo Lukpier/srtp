@@ -33,6 +33,7 @@ type session struct {
 	bufferFactory func(packetType packetio.BufferPacketType, ssrc uint32) io.ReadWriteCloser
 
 	nextConn net.Conn
+	count    count32
 }
 
 // Config is used to configure a session.
@@ -49,6 +50,7 @@ type Config struct {
 	// ReplayProtection is enabled on remote context by default.
 	// Default replay protection window size is 64.
 	LocalOptions, RemoteOptions []ContextOption
+	count                       *count32 // used for send/receive request tracking
 }
 
 // SessionKeys bundles the keys required to setup an SRTP session

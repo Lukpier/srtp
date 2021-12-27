@@ -1,6 +1,7 @@
 package srtp
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -55,6 +56,7 @@ func NewSessionSRTP(conn net.Conn, config *Config) (*SessionSRTP, error) { //nol
 			closed:        make(chan interface{}),
 			bufferFactory: config.BufferFactory,
 			log:           loggerFactory.NewLogger("srtp"),
+			count:         *config.count,
 		},
 	}
 	s.writeStream = &WriteStreamSRTP{s}
@@ -126,6 +128,7 @@ func (s *SessionSRTP) writeRTP(header *rtp.Header, payload []byte) (int, error) 
 
 	s.session.localContextMutex.Lock()
 	encrypted, err := s.localContext.encryptRTP(nil, header, payload)
+	fmt.Println("I'm encrypted send request ", s.count.get())
 	s.session.localContextMutex.Unlock()
 
 	if err != nil {
@@ -167,6 +170,7 @@ func (s *SessionSRTP) decrypt(buf []byte) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("I'm decripted receive request ", s.count.get())
 
 	return nil
 }
