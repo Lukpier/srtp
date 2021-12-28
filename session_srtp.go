@@ -3,6 +3,7 @@ package srtp
 import (
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/pion/logging"
@@ -44,19 +45,20 @@ func NewSessionSRTP(conn net.Conn, config *Config) (*SessionSRTP, error) { //nol
 		},
 		config.RemoteOptions...,
 	)
-
 	s := &SessionSRTP{
 		session: session{
-			nextConn:      conn,
-			localOptions:  localOpts,
-			remoteOptions: remoteOpts,
-			readStreams:   map[uint32]readStream{},
-			newStream:     make(chan readStream),
-			started:       make(chan interface{}),
-			closed:        make(chan interface{}),
-			bufferFactory: config.BufferFactory,
-			log:           loggerFactory.NewLogger("srtp"),
-			count:         *config.count,
+			nextConn:          conn,
+			localOptions:      localOpts,
+			remoteOptions:     remoteOpts,
+			readStreams:       map[uint32]readStream{},
+			newStream:         make(chan readStream),
+			started:           make(chan interface{}),
+			closed:            make(chan interface{}),
+			bufferFactory:     config.BufferFactory,
+			log:               loggerFactory.NewLogger("srtp"),
+			packetDumpEnabled: config.PacketDumpEnabled,
+			count:             config.Count,
+			packetOutputDir:   config.PacketOutputDir,
 		},
 	}
 	s.writeStream = &WriteStreamSRTP{s}
@@ -125,17 +127,26 @@ func (s *SessionSRTP) writeRTP(header *rtp.Header, payload []byte) (int, error) 
 	if _, ok := <-s.session.started; ok {
 		return 0, errStartedChannelUsedIncorrectly
 	}
-
+	s.WriteRTPPacketToFile(payload, "out", "decrypted")
 	s.session.localContextMutex.Lock()
 	encrypted, err := s.localContext.encryptRTP(nil, header, payload)
-	fmt.Println("I'm encrypted send request ", s.count.get())
 	s.session.localContextMutex.Unlock()
+	s.WriteRTPPacketToFile(encrypted, "out", "raw")
 
 	if err != nil {
 		return 0, err
 	}
 
 	return s.session.nextConn.Write(encrypted)
+}
+
+func (s *SessionSRTP) WriteRTPPacketToFile(payload []byte, direction string, format string) error {
+	if s.packetDumpEnabled {
+		s.count.Inc()
+		err := os.WriteFile(fmt.Sprintf("%s/%06d_%s_%s.txt", s.packetOutputDir, s.count.Get(), direction, format), payload, 0700)
+		return err
+	}
+	return nil
 }
 
 func (s *SessionSRTP) setWriteDeadline(t time.Time) error {
@@ -161,16 +172,16 @@ func (s *SessionSRTP) decrypt(buf []byte) error {
 		return errFailedTypeAssertion
 	}
 
+	s.WriteRTPPacketToFile(buf, "in", "raw")
 	decrypted, err := s.remoteContext.decryptRTP(buf, buf, h, headerLen)
 	if err != nil {
 		return err
 	}
-
+	s.WriteRTPPacketToFile(decrypted, "in", "decrypted")
 	_, err = readStream.write(decrypted)
 	if err != nil {
 		return err
 	}
-	fmt.Println("I'm decripted receive request ", s.count.Get())
 
 	return nil
 }

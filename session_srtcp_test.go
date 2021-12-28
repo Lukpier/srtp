@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/rtcp"
 	"github.com/pion/transport/test"
 )
@@ -28,7 +29,7 @@ func buildSessionSRTCP(t *testing.T) (*SessionSRTCP, net.Conn, *Config) {
 	aPipe, bPipe := net.Pipe()
 	config := &Config{
 		Profile: ProtectionProfileAes128CmHmacSha1_80,
-		count:   &count32{},
+		Count:   &gocounter.Counter64{},
 		Keys: SessionKeys{
 			[]byte{0xE1, 0xF9, 0x7A, 0x0D, 0x3E, 0x01, 0x8B, 0xE0, 0xD6, 0x4F, 0xA3, 0x2C, 0x06, 0xDE, 0x41, 0x39},
 			[]byte{0x0E, 0xC6, 0x75, 0xAD, 0x49, 0x8A, 0xFE, 0xEB, 0xB6, 0x96, 0x0B, 0x3A, 0xAB, 0xE6},

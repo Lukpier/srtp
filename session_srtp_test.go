@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/rtp"
 	"github.com/pion/transport/test"
 )
@@ -21,11 +22,13 @@ func TestSessionSRTPBadInit(t *testing.T) {
 	}
 }
 
-func buildSessionSRTP(t *testing.T) (*SessionSRTP, net.Conn, *Config) {
+func buildSessionSRTP(t *testing.T, dumpEnabled bool) (*SessionSRTP, net.Conn, *Config) {
 	aPipe, bPipe := net.Pipe()
 	config := &Config{
-		Profile: ProtectionProfileAes128CmHmacSha1_80,
-		count:   &count32{},
+		Profile:           ProtectionProfileAes128CmHmacSha1_80,
+		Count:             &gocounter.Counter64{},
+		PacketDumpEnabled: dumpEnabled,
+		PacketOutputDir:   "/tmp/",
 		Keys: SessionKeys{
 			[]byte{0xE1, 0xF9, 0x7A, 0x0D, 0x3E, 0x01, 0x8B, 0xE0, 0xD6, 0x4F, 0xA3, 0x2C, 0x06, 0xDE, 0x41, 0x39},
 			[]byte{0x0E, 0xC6, 0x75, 0xAD, 0x49, 0x8A, 0xFE, 0xEB, 0xB6, 0x96, 0x0B, 0x3A, 0xAB, 0xE6},
@@ -44,8 +47,8 @@ func buildSessionSRTP(t *testing.T) (*SessionSRTP, net.Conn, *Config) {
 	return aSession, bPipe, config
 }
 
-func buildSessionSRTPPair(t *testing.T) (*SessionSRTP, *SessionSRTP) { //nolint:dupl
-	aSession, bPipe, config := buildSessionSRTP(t)
+func buildSessionSRTPPair(t *testing.T, packetDump bool) (*SessionSRTP, *SessionSRTP) { //nolint:dupl
+	aSession, bPipe, config := buildSessionSRTP(t, packetDump)
 	bSession, err := NewSessionSRTP(bPipe, config)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +72,7 @@ func TestSessionSRTP(t *testing.T) {
 	)
 	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
 	readBuffer := make([]byte, rtpHeaderSize+len(testPayload))
-	aSession, bSession := buildSessionSRTPPair(t)
+	aSession, bSession := buildSessionSRTPPair(t, false)
 
 	aWriteStream, err := aSession.OpenWriteStream()
 	if err != nil {
@@ -116,7 +119,7 @@ func TestSessionSRTPWithIODeadline(t *testing.T) {
 	)
 	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
 	readBuffer := make([]byte, rtpHeaderSize+len(testPayload))
-	aSession, bPipe, config := buildSessionSRTP(t)
+	aSession, bPipe, config := buildSessionSRTP(t, false)
 
 	aWriteStream, err := aSession.OpenWriteStream()
 	if err != nil {
@@ -175,6 +178,29 @@ func TestSessionSRTPWithIODeadline(t *testing.T) {
 	}
 }
 
+func TestWriteRTPPacketToFile(t *testing.T) {
+	lim := test.TimeOut(time.Second * 10)
+	defer lim.Stop()
+
+	report := test.CheckRoutines(t)
+	defer report()
+	const (
+		testSSRC      = 5000
+		rtpHeaderSize = 12
+	)
+	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
+	aSession, _ := buildSessionSRTPPair(t, true)
+	err := aSession.WriteRTPPacketToFile(testPayload, "in", "raw")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = aSession.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSessionSRTPOpenReadStream(t *testing.T) {
 	lim := test.TimeOut(time.Second * 5)
 	defer lim.Stop()
@@ -188,7 +214,7 @@ func TestSessionSRTPOpenReadStream(t *testing.T) {
 	)
 	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
 	readBuffer := make([]byte, rtpHeaderSize+len(testPayload))
-	aSession, bSession := buildSessionSRTPPair(t)
+	aSession, bSession := buildSessionSRTPPair(t, false)
 
 	bReadStream, err := bSession.OpenReadStream(5000)
 	if err != nil {
@@ -230,7 +256,7 @@ func TestSessionSRTPMultiSSRC(t *testing.T) {
 	const rtpHeaderSize = 12
 	ssrcs := []uint32{5000, 5001, 5002}
 	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
-	aSession, bSession := buildSessionSRTPPair(t)
+	aSession, bSession := buildSessionSRTPPair(t, false)
 
 	bReadStreams := make(map[uint32]*ReadStreamSRTP)
 	for _, ssrc := range ssrcs {
@@ -281,7 +307,7 @@ func TestSessionSRTPReplayProtection(t *testing.T) {
 		rtpHeaderSize = 12
 	)
 	testPayload := []byte{0x00, 0x01, 0x03, 0x04}
-	aSession, bSession := buildSessionSRTPPair(t)
+	aSession, bSession := buildSessionSRTPPair(t, false)
 	bReadStream, err := bSession.OpenReadStream(testSSRC)
 	if err != nil {
 		t.Fatal(err)

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/rtp"
 	"github.com/pion/transport/packetio"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +40,7 @@ func TestBufferFactory(t *testing.T) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
-		count:         &count32{},
+		Count:         &gocounter.Counter64{},
 		BufferFactory: bf,
 		Profile:       ProtectionProfileAes128CmHmacSha1_80,
 	})
@@ -51,7 +52,7 @@ func TestBufferFactory(t *testing.T) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
-		count:         &count32{},
+		Count:         &gocounter.Counter64{},
 		BufferFactory: bf,
 		Profile:       ProtectionProfileAes128CmHmacSha1_80,
 	})
@@ -73,7 +74,7 @@ func BenchmarkWrite(b *testing.B) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
-		count:   &count32{},
+		Count:   &gocounter.Counter64{},
 		Profile: ProtectionProfileAes128CmHmacSha1_80,
 	}
 
@@ -128,7 +129,7 @@ func BenchmarkWriteRTP(b *testing.B) {
 			RemoteMasterKey:  make([]byte, 16),
 			RemoteMasterSalt: make([]byte, 14),
 		},
-		count:   &count32{},
+		Count:   &gocounter.Counter64{},
 		Profile: ProtectionProfileAes128CmHmacSha1_80,
 	}
 

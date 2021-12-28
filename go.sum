@@ -1,3 +1,5 @@
+github.com/Lukpier/gocounter v1.0.0 h1:fvUjyrC6ie1JQblI/8vAZiAa+KdgKuZw68DEgn7ZF8w=
+github.com/Lukpier/gocounter v1.0.0/go.mod h1:3pJTQ55dsQ492oqCaHU/zQzOJT3HQTGBkC9tmBqsdfo=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/pion/logging v0.2.2 h1:M9+AIj/+pxNsDfAT64+MAVgJO0rsyLnoJKCqf//DoeY=

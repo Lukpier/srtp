@@ -5,6 +5,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"testing"
+
+	"github.com/Lukpier/gocounter"
 )
 
 type mockKeyingMaterialExporter struct {
@@ -28,7 +30,7 @@ func TestExtractSessionKeysFromDTLS(t *testing.T) {
 	tt := []struct {
 		config *Config
 	}{
-		{&Config{Profile: ProtectionProfileAes128CmHmacSha1_80, count: &count32{}}},
+		{&Config{Profile: ProtectionProfileAes128CmHmacSha1_80, Count: &gocounter.Counter64{}}},
 	}
 
 	m := &mockKeyingMaterialExporter{}

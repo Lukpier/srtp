@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/Lukpier/gocounter"
 	"github.com/pion/logging"
 	"github.com/pion/transport/packetio"
 )
@@ -32,8 +33,10 @@ type session struct {
 	log           logging.LeveledLogger
 	bufferFactory func(packetType packetio.BufferPacketType, ssrc uint32) io.ReadWriteCloser
 
-	nextConn net.Conn
-	count    count32
+	nextConn          net.Conn
+	packetDumpEnabled bool
+	count             *gocounter.Counter64
+	packetOutputDir   string
 }
 
 // Config is used to configure a session.
@@ -50,7 +53,9 @@ type Config struct {
 	// ReplayProtection is enabled on remote context by default.
 	// Default replay protection window size is 64.
 	LocalOptions, RemoteOptions []ContextOption
-	count                       *count32 // used for send/receive request tracking
+	PacketDumpEnabled           bool                 // enables packet dump to filesystem.
+	Count                       *gocounter.Counter64 // used for send/receive request tracking
+	PacketOutputDir             string
 }
 
 // SessionKeys bundles the keys required to setup an SRTP session
